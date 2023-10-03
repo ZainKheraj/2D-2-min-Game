@@ -1,0 +1,88 @@
+import curses
+import time
+import random
+
+def main(stdscr):
+    # Set up the terminal
+    curses.curs_set(0)
+    stdscr.nodelay(1)
+    stdscr.timeout(100)
+
+    # Get the terminal size
+    sh, sw = stdscr.getmaxyx()
+
+    # Create the paddles and the ball
+    paddle_height = 3
+    paddle_width = 1
+    ball = [sh // 2, sw // 2]
+    ball_direction = [1, 1]  # [vertical, horizontal]
+    paddle_left = [(sh // 2) - (paddle_height // 2), 1]
+    paddle_right = [(sh // 2) - (paddle_height // 2), sw - 2]
+
+    # Initialize the score
+    score_left = 0
+    score_right = 0
+
+    # Create the game loop
+    while True:
+        # Clear the screen
+        stdscr.clear()
+
+        # Move the ball
+        ball[0] += ball_direction[0]
+        ball[1] += ball_direction[1]
+
+        # Check for collisions with top and bottom walls
+        if ball[0] == 0 or ball[0] == sh - 1:
+            ball_direction[0] *= -1
+
+        # Check for collisions with paddles
+        if (
+            ball[1] == paddle_left[1] + 1
+            and paddle_left[0] <= ball[0] < paddle_left[0] + paddle_height
+        ):
+            ball_direction[1] *= -1
+        elif (
+            ball[1] == paddle_right[1] - 1
+            and paddle_right[0] <= ball[0] < paddle_right[0] + paddle_height
+        ):
+            ball_direction[1] *= -1
+
+        # Check for scoring
+        if ball[1] == 0:
+            score_right += 1
+            ball = [sh // 2, sw // 2]
+            ball_direction = [1, 1]
+        elif ball[1] == sw - 1:
+            score_left += 1
+            ball = [sh // 2, sw // 2]
+            ball_direction = [-1, -1]
+
+        # Draw the paddles and the ball
+        for i in range(paddle_height):
+            stdscr.addch(paddle_left[0] + i, paddle_left[1], "|")
+            stdscr.addch(paddle_right[0] + i, paddle_right[1], "|")
+
+        stdscr.addch(ball[0], ball[1], "O")
+
+        # Display the score
+        stdscr.addstr(0, sw // 2 - 5, f"Left: {score_left} Right: {score_right}")
+
+        # Refresh the screen
+        stdscr.refresh()
+
+        # Get user input
+        key = stdscr.getch()
+        if key == ord("q"):
+            break
+        elif key == ord("w") and paddle_left[0] > 0:
+            paddle_left[0] -= 1
+        elif key == ord("s") and paddle_left[0] < sh - paddle_height:
+            paddle_left[0] += 1
+        elif key == ord("i") and paddle_right[0] > 0:
+            paddle_right[0] -= 1
+        elif key == ord("k") and paddle_right[0] < sh - paddle_height:
+            paddle_right[0] += 1
+
+if __name__ == "__main__":
+    curses.wrapper(main)
